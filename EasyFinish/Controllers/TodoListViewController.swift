@@ -10,18 +10,46 @@ import UIKit
 
 class TodoListViewController: UITableViewController{
     let defaults = UserDefaults.standard
-    var itemList : [String] = ["Eggs", "Milk", "Steak"]
-
+    var itemArray = [Item]()
+    //var itemList: [String] = ["32","33"]
+    
     override func viewDidLoad() {
-        if let items = defaults.array(forKey: "TodoList") as? [String]{
-            itemList = items
-        }
         super.viewDidLoad()
+        
+        let item_1 = Item()
+        item_1.title = "Apple"
+        
+        let item_2 = Item()
+        item_2.title = "Pear"
+        
+        let item_3 = Item()
+        item_2.title = "Grapes"
+        
+        itemArray.append(item_1)
+        itemArray.append(item_2)
+        itemArray.append(item_3)
+        itemArray.append(item_2)
+        itemArray.append(item_3)
+        itemArray.append(item_2)
+        itemArray.append(item_3)
+        itemArray.append(item_2)
+        itemArray.append(item_3)
+        
+        if let items = defaults.array(forKey: "Todo") as? [Item]{
+            itemArray = items
+        }
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
         let cell = tableView.dequeueReusableCell(withIdentifier: "ListCell", for: indexPath)
-        cell.textLabel?.text = itemList[indexPath.row]
+        let item = itemArray[indexPath.row]
+        cell.textLabel?.text = itemArray[indexPath.row].title
+        
+        if item.check == true{
+            cell.accessoryType = .checkmark
+        }else{
+            cell.accessoryType = .none
+        }
         return cell
     }
     
@@ -32,7 +60,7 @@ class TodoListViewController: UITableViewController{
      Returns: number of cell rows for UI
      */
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
-        return itemList.count
+        return itemArray.count
     }
     
     /*
@@ -42,11 +70,10 @@ class TodoListViewController: UITableViewController{
      Returns: number of cell rows for UI
      */
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if tableView.cellForRow(at: indexPath)?.accessoryType == .checkmark{
-            tableView.cellForRow(at: indexPath)?.accessoryType = .none
-        }else{
-            tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
-        }
+        
+        itemArray[indexPath.row].check = !itemArray[indexPath.row].check
+        
+        tableView.reloadData()
         tableView.deselectRow(at: indexPath, animated: true)
     }
     
@@ -60,9 +87,14 @@ class TodoListViewController: UITableViewController{
         var textfield = UITextField()
         let alert = UIAlertController(title: "Add to the list", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add", style: .default) { (action) in
-            if textfield.text!.isEmpty == false{
-                 self.itemList.append(textfield.text!)
-                 self.defaults.set(self.itemList, forKey: "TodoList")
+            if textfield.text!.isEmpty == false {
+                let newItem = Item()
+                 newItem.title = textfield.text!
+                
+                 self.itemArray.append(newItem)
+                
+                 self.defaults.set(self.itemArray, forKey: "TodoList")
+                
                  self.tableView.reloadData()
             }
         }
