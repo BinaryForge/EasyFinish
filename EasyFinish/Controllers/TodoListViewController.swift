@@ -10,7 +10,6 @@ import UIKit
 import CoreData
 
 class TodoListViewController: UITableViewController{
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     var itemArray = [Item]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
@@ -87,14 +86,14 @@ class TodoListViewController: UITableViewController{
      Parameters: N/A
      Returns: N/A
      */
-    func loadItems(){
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()){
         do{
             itemArray = try context.fetch(request)
         }
         catch{
             print("Error")
         }
+        self.tableView.reloadData()
    }
 
     /*
@@ -111,6 +110,35 @@ class TodoListViewController: UITableViewController{
         }
          self.tableView.reloadData()
     }
+}
+
+extension TodoListViewController: UISearchBarDelegate{
+    /*
+     Function provides search capablities of Items in the list
+     
+     Parameters: Default
+     Returns: N/A
+     */
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        loadItems(with: request)
+    }
     
+    /*
+     Function resets tableview back to original list after searching is done.
+     
+     Parameters: Default
+     Returns: N/A
+     */
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+            DispatchQueue.main.async {
+                 searchBar.resignFirstResponder()
+            }
+        }
+    }
 }
 
