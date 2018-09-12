@@ -7,11 +7,12 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListViewController: UITableViewController{
-    let defaults = UserDefaults.standard
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
     var itemArray = [Item]()
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,11 +46,12 @@ class TodoListViewController: UITableViewController{
     /*
      Set cell rows based on itemList Array
      
-     Parameters: tableView, numberOfRowsInSection
-     Returns: number of cell rows for UI
+     Parameters: tableView, IndexPath
+     Returns: N/A
      */
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        itemArray[indexPath.row].check = !itemArray[indexPath.row].check
+        context.delete(itemArray[indexPath.row])
+        itemArray.remove(at: indexPath.row)
         saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -65,8 +67,9 @@ class TodoListViewController: UITableViewController{
         let alert = UIAlertController(title: "Add to the list", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "Add", style: .default) { (action) in
             if textfield.text!.isEmpty == false {
-                 let newItem = Item()
+                 let newItem = Item(context: self.context)
                  newItem.title = textfield.text!
+                 newItem.check = false
                  self.itemArray.append(newItem)
                  self.saveItems()
             }
@@ -79,29 +82,30 @@ class TodoListViewController: UITableViewController{
         present(alert, animated: true, completion: nil)
     }
     
-    func loadItems(){
-        if let data = try? Data(contentsOf: dataFilePath!){
-            let decoder = PropertyListDecoder()
-            do{
-                itemArray = try decoder.decode([Item].self, from: data )
-            }
-            catch{
-                print("Error")
-            }
-        }
-    }
-    
     /*
-     Save user items into plist file
+     Load items from persistentContainer
+     Parameters: N/A
+     Returns: N/A
+     */
+    func loadItems(){
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        do{
+            itemArray = try context.fetch(request)
+        }
+        catch{
+            print("Error")
+        }
+   }
+
+    /*
+     Save user items into persistentContainer
      
      Parameters: N/A
      Returns: N/A
      */
     func saveItems(){
-        let encoder = PropertyListEncoder()
         do{
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
         }catch{
             print("Error")
         }
